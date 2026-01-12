@@ -122,3 +122,4 @@ CREATE TABLE IF NOT EXISTS debt_mail_log (
   error     TEXT,
   FOREIGN KEY(user_id) REFERENCES users(id)
 );
+

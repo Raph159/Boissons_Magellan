@@ -2,7 +2,9 @@ import { useEffect, useState } from "react";
 import { api } from "../lib/api";
 
 type DebtRow = {
-  month_key: string;
+  period_id: string;
+  start_ts: string;
+  end_ts: string;
   user_id: number;
   user_name: string;
   user_email: string | null;
@@ -30,7 +32,7 @@ export default function DebtsPage() {
   setCloseMsg("");
   try {
     const payload = closeMonth.trim() ? { month_key: closeMonth.trim() } : {};
-    const res = await api<{ ok: true; month_key: string; created: number }>("/api/admin/close-month", {
+    const res = await api<{ ok: true; month_key: string; created: number }>("/api/admin/close-period", {
       method: "POST",
       body: JSON.stringify(payload),
     });
@@ -60,11 +62,11 @@ export default function DebtsPage() {
   useEffect(() => { load(); }, [statusFilter]);
 
   async function pay(d: DebtRow) {
-    if (!confirm(`Marquer payé: ${d.user_name} (${d.month_key}) = ${euros(d.amount_cents)} ?`)) return;
+    if (!confirm(`Marquer payé: ${d.user_name} (${d.end_ts.substring(0, 7)}) = ${euros(d.amount_cents)} ?`)) return;
     try {
       await api("/api/admin/debts/pay", {
         method: "POST",
-        body: JSON.stringify({ month_key: d.month_key, user_id: d.user_id }),
+        body: JSON.stringify({ period_id: d.period_id, user_id: d.user_id }),
       });
       await load();
     } catch (e: any) {
@@ -73,11 +75,11 @@ export default function DebtsPage() {
   }
 
   async function unpay(d: DebtRow) {
-    if (!confirm(`Annuler paiement: ${d.user_name} (${d.month_key}) ?`)) return;
+    if (!confirm(`Annuler paiement: ${d.user_name} (${d.end_ts.substring(0, 7)}) ?`)) return;
     try {
       await api("/api/admin/debts/unpay", {
         method: "POST",
-        body: JSON.stringify({ month_key: d.month_key, user_id: d.user_id }),
+        body: JSON.stringify({ period_id: d.period_id, user_id: d.user_id }),
       });
       await load();
     } catch (e: any) {
@@ -97,12 +99,6 @@ export default function DebtsPage() {
         </p>
       
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
-          <input
-            value={closeMonth}
-            onChange={(e) => setCloseMonth(e.target.value)}
-            placeholder="YYYY-MM (optionnel)"
-            style={{ padding: 8, width: 180 }}
-          />
           <button onClick={closeMonthAction} style={{ fontWeight: 900 }}>
             Clôturer
           </button>
@@ -142,7 +138,7 @@ export default function DebtsPage() {
       <div style={{ display: "grid", gap: 8 }}>
         {debts.map((d) => (
           <div
-            key={`${d.month_key}-${d.user_id}`}
+            key={`${d.period_id}-${d.user_id}`}
             style={{
               border: "1px solid #444",
               borderRadius: 10,
@@ -159,7 +155,7 @@ export default function DebtsPage() {
             </div>
 
             <div>
-              <div style={{ fontWeight: 800 }}>{d.month_key}</div>
+              <div style={{ fontWeight: 800 }}>{d.end_ts.substring(0, 7)}</div>
               <div style={{ opacity: 0.7 }}>{d.status === "paid" ? "Payée" : "Impayée"}</div>
             </div>
 

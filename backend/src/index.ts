@@ -11,8 +11,12 @@ import { adminDebtRoutes } from "./routes/admin/debts.js";
 import { adminCloseMonthRoutes } from "./routes/admin/closeMonth.js";
 import { adminDebtSummaryRoutes } from "./routes/admin/debtSummary.js";
 import { adminDebtSummaryCurrentRoutes } from "./routes/admin/debtSummaryCurrent.js";
+import { adminClosePeriodRoutes } from "./routes/admin/closePeriod.js";
 
 const app = Fastify({ logger: true });
+
+
+
 
 await app.register(cors, {
   origin: ["http://localhost:5173"],
@@ -31,6 +35,7 @@ app.register(adminDebtRoutes);
 app.register(adminCloseMonthRoutes);
 app.register(adminDebtSummaryRoutes);
 app.register(adminDebtSummaryCurrentRoutes);
+app.register(adminClosePeriodRoutes);
 
 
 

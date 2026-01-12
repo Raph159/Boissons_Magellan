@@ -12,7 +12,9 @@ type SummaryRow = {
 
 
 type UserDebtRow = {
-  month_key: string;
+  period_id: string;
+  start_ts: string;
+  end_ts: string;
   amount_cents: number;
   status: "invoiced" | "paid";
   generated_at: string;
@@ -40,9 +42,10 @@ export default function DebtSummaryPage() {
     setSelectedUser(null);
     setDetail([]);
     try {
-      const data = await api<{ month_key: string; summary: SummaryRow[] }>(`/api/admin/debts/summary-current`);
-      setCurrentMonth(data.month_key); // ajoute un state
-      setRows(data.summary);
+      const qs = new URLSearchParams();
+      qs.set("status", statusFilter);
+      const data = await api<{ month_key: string; summary: SummaryRow[] }>(`/api/admin/debts/summary-current?${qs.toString()}`);
+      setCurrentMonth(data.month_key);
       setRows(data.summary);
     } catch (e: any) {
       setError(e.message);
@@ -154,7 +157,7 @@ export default function DebtSummaryPage() {
                 <div style={{ display: "grid", gap: 8 }}>
                   {detail.map((d) => (
                     <div
-                      key={d.month_key}
+                      key={d.period_id}
                       style={{
                         border: "1px solid #444",
                         borderRadius: 10,
@@ -165,7 +168,7 @@ export default function DebtSummaryPage() {
                       }}
                     >
                       <div>
-                        <div style={{ fontWeight: 900 }}>{d.month_key}</div>
+                        <div style={{ fontWeight: 900 }}>{d.end_ts.substring(0, 7)}</div>
                         <div style={{ opacity: 0.7 }}>
                           {d.status === "paid" ? `Payé: ${d.paid_at}` : "Impayé"}
                         </div>

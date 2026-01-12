@@ -4,12 +4,12 @@ initDB();
 const db = getDB();
 
 db.prepare(`
-  INSERT INTO users (name, email, rfid_uid, is_active)
+  INSERT OR IGNORE INTO users (name, email, rfid_uid, is_active)
   VALUES (?, ?, ?, ?)
 `).run("Raphael", "raphael@example.com", "TEST123", 1);
 
 db.prepare(`
-  INSERT INTO users (name, email, rfid_uid, is_active)
+  INSERT OR IGNORE INTO users (name, email, rfid_uid, is_active)
   VALUES (?, ?, ?, ?)
 `).run("User Bloqué", "blocked@example.com", "BLOCK999", 0);
 

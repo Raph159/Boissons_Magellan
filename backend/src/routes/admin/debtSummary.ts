@@ -20,15 +20,15 @@ export async function adminDebtSummaryRoutes(app: FastifyInstance) {
     const db = getDB();
     const rows = db.prepare(`
       SELECT
-        md.user_id,
+        pd.user_id,
         u.name AS user_name,
         u.email AS user_email,
-        COUNT(*) AS months_count,
-        SUM(md.amount_cents) AS total_cents
-      FROM monthly_debts md
-      JOIN users u ON u.id = md.user_id
-      WHERE md.status = ?
-      GROUP BY md.user_id
+        COUNT(DISTINCT pd.period_id) AS periods_count,
+        SUM(pd.amount_cents) AS total_cents
+      FROM period_debts pd
+      JOIN users u ON u.id = pd.user_id
+      WHERE pd.status = ?
+      GROUP BY pd.user_id
       ORDER BY total_cents DESC, u.name ASC
     `).all(status) as any[];
 
@@ -38,7 +38,7 @@ export async function adminDebtSummaryRoutes(app: FastifyInstance) {
         user_id: r.user_id,
         user_name: r.user_name,
         user_email: r.user_email,
-        months_count: Number(r.months_count),
+        periods_count: Number(r.periods_count),
         total_cents: Number(r.total_cents ?? 0),
       })),
     };
@@ -66,20 +66,23 @@ export async function adminDebtSummaryRoutes(app: FastifyInstance) {
     const user = db.prepare(`SELECT id, name, email FROM users WHERE id=?`).get(userId);
     if (!user) return reply.code(404).send({ error: "User not found" });
 
-    const where = ["md.user_id = ?"];
+    const where = ["pd.user_id = ?"];
     const args: any[] = [userId];
-    if (status) { where.push("md.status = ?"); args.push(status); }
+    if (status) { where.push("pd.status = ?"); args.push(status); }
 
     const debts = db.prepare(`
       SELECT
-        md.month_key,
-        md.amount_cents,
-        md.status,
-        md.generated_at,
-        md.paid_at
-      FROM monthly_debts md
+        pd.period_id,
+        bp.start_ts,
+        bp.end_ts,
+        pd.amount_cents,
+        pd.status,
+        pd.generated_at,
+        pd.paid_at
+      FROM period_debts pd
+      JOIN billing_periods bp ON bp.id = pd.period_id
       WHERE ${where.join(" AND ")}
-      ORDER BY md.month_key DESC
+      ORDER BY bp.end_ts DESC
     `).all(...args);
 
     return { user, debts };
