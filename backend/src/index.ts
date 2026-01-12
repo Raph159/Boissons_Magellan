@@ -1,17 +1,28 @@
 import Fastify from "fastify";
 import cors from "@fastify/cors";
+import "dotenv/config";
 import { initDB } from "./db/db.js";
 import { healthRoutes } from "./routes/health.js";
+import { kioskRoutes } from "./routes/kiosk.js";
+import { productRoutes } from "./routes/products.js";
+import { orderRoutes } from "./routes/order.js";
+import { adminRoutes } from "./routes/admin/admin.js";
 
 const app = Fastify({ logger: true });
 
 await app.register(cors, {
-  origin: true
+  origin: ["http://localhost:5173"],
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
 });
+
 
 initDB();
 
 app.register(healthRoutes);
+app.register(kioskRoutes);
+app.register(productRoutes);
+app.register(orderRoutes);
+app.register(adminRoutes);
 
 const PORT = Number(process.env.PORT) || 3000;
 
