@@ -17,10 +17,30 @@ function euros(cents: number) {
 }
 
 export default function DebtsPage() {
+  const [closeMsg, setCloseMsg] = useState<string>("");
+  const [closeMonth, setCloseMonth] = useState<string>(""); // optionnel
+
   const [statusFilter, setStatusFilter] = useState<"invoiced" | "paid">("invoiced");
   const [month, setMonth] = useState<string>("");
   const [debts, setDebts] = useState<DebtRow[]>([]);
   const [msg, setMsg] = useState<string>("");
+
+
+  async function closeMonthAction() {
+  setCloseMsg("");
+  try {
+    const payload = closeMonth.trim() ? { month_key: closeMonth.trim() } : {};
+    const res = await api<{ ok: true; month_key: string; created: number }>("/api/admin/close-month", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+    setCloseMsg(`Clôture OK ✅ mois=${res.month_key} (dettes créées: ${res.created})`);
+    // recharge la liste des dettes impayées
+    await load();
+  } catch (e: any) {
+    setCloseMsg("Erreur clôture: " + e.message);
+  }
+}
 
   async function load() {
     setMsg("");
@@ -70,7 +90,28 @@ export default function DebtsPage() {
   return (
     <section style={{ display: "grid", gap: 12 }}>
       <h2 style={{ margin: 0 }}>Dettes</h2>
+      <div style={{ padding: 12, border: "1px solid #333", borderRadius: 12 }}>
+        <h3 style={{ marginTop: 0 }}>Clôture mensuelle</h3>
+        <p style={{ opacity: 0.7, marginTop: 0 }}>
+          Par défaut : clôture le mois précédent (YYYY-MM). Bloquée si déjà clôturé.
+        </p>
+      
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+          <input
+            value={closeMonth}
+            onChange={(e) => setCloseMonth(e.target.value)}
+            placeholder="YYYY-MM (optionnel)"
+            style={{ padding: 8, width: 180 }}
+          />
+          <button onClick={closeMonthAction} style={{ fontWeight: 900 }}>
+            Clôturer
+          </button>
+          {closeMsg && <span style={{ opacity: 0.85 }}>{closeMsg}</span>}
+        </div>
+      </div>
 
+    
+    
       <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
         <label>
           Statut{" "}
