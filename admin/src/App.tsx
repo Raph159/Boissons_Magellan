@@ -5,8 +5,9 @@ import ProductsPage from "./pages/ProductsPage";
 import RestockPage from "./pages/RestockPage";
 import DebtsPage from "./pages/DebtsPage";
 import DebtSummaryPage from "./pages/DebtSummaryPage";
+import UsersPage from "./pages/UsersPage";
 
-type Page = "products" | "restock" | "debts" | "summary";
+type Page = "products" | "restock" | "debts" | "summary" | "users";
 
 export default function App() {
   const [page, setPage] = useState<Page>("products");
@@ -26,6 +27,7 @@ export default function App() {
           <button onClick={() => setPage("restock")} disabled={page === "restock"}>Restock</button>
           <button onClick={() => setPage("debts")} disabled={page === "debts"}>Dettes</button>
           <button onClick={() => setPage("summary")} disabled={page === "summary"}>Résumé</button>
+          <button onClick={() => setPage("users")} disabled={page === "users"}>Users</button>
         </nav>
       </header>
 
@@ -58,6 +60,7 @@ export default function App() {
         {page === "restock" && <RestockPage />}
         {page === "debts" && <DebtsPage />}
         {page === "summary" && <DebtSummaryPage />}
+        {page === "users" && <UsersPage />}
       </main>
     </div>
   );
