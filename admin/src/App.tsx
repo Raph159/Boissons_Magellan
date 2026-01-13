@@ -20,12 +20,10 @@ export default function App() {
         <header className="admin-header">
           <div className="brand">
             <div className="brand-title">
+              <img className="brand-logo" src="/magellan-logo.png" alt="Magellan" />
               <h1>Admin Boissons</h1>
-              <span className="badge">VPN only</span>
+              <span className="badge">Cercle Magellan</span>
             </div>
-            <p className="brand-subtitle">
-              Gestion des produits, stocks et dettes depuis un seul espace.
-            </p>
           </div>
 
           <nav className="admin-nav">
@@ -95,6 +93,7 @@ export default function App() {
           {page === "users" && <UsersPage />}
         </main>
       </div>
+      <footer className="app-footer">Développé par Delens Raphaël</footer>
     </div>
   );
 }

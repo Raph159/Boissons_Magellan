@@ -15,41 +15,47 @@ type DebtRow = {
 };
 
 function euros(cents: number) {
-  return (cents / 100).toFixed(2) + " €";
+  return (cents / 100).toFixed(2) + " EUR";
+}
+
+function periodLabel(d: DebtRow) {
+  return `${d.start_ts} -> ${d.end_ts}`;
 }
 
 export default function DebtsPage() {
-  const [closeMsg, setCloseMsg] = useState<string>("");
-  const [closeMonth] = useState<string>("");
-
+  const [closeMsg, setCloseMsg] = useState("");
+  const [comment, setComment] = useState("");
 
   const [statusFilter, setStatusFilter] = useState<"invoiced" | "paid">("invoiced");
-  const [month, setMonth] = useState<string>("");
   const [debts, setDebts] = useState<DebtRow[]>([]);
-  const [msg, setMsg] = useState<string>("");
+  const [msg, setMsg] = useState("");
 
-
-  async function closeMonthAction() {
-  setCloseMsg("");
-  try {
-    const payload = closeMonth.trim() ? { month_key: closeMonth.trim() } : {};
-    const res = await api<{ ok: true; month_key: string; created: number }>("/api/admin/close-period", {
-      method: "POST",
-      body: JSON.stringify(payload),
-    });
-    setCloseMsg(`Clôture OK ✅ mois=${res.month_key} (dettes créées: ${res.created})`);
-    // recharge la liste des dettes impayées
-    await load();
-  } catch (e: any) {
-    setCloseMsg("Erreur clôture: " + e.message);
+  async function closePeriodAction() {
+    setCloseMsg("");
+    try {
+      const payload = comment.trim() ? { comment: comment.trim() } : {};
+      const res = await api<{
+        ok: true;
+        period_id: string;
+        start_ts: string;
+        end_ts: string;
+        created: number;
+      }>("/api/admin/close-period", {
+        method: "POST",
+        body: JSON.stringify(payload),
+      });
+      setCloseMsg(`Cloture OK: ${res.start_ts} -> ${res.end_ts} (dettes creees: ${res.created})`);
+      setComment("");
+      await load();
+    } catch (e: any) {
+      setCloseMsg("Erreur cloture: " + e.message);
+    }
   }
-}
 
   async function load() {
     setMsg("");
     const qs = new URLSearchParams();
     qs.set("status", statusFilter);
-    if (month.trim()) qs.set("month_key", month.trim());
 
     try {
       const data = await api<{ debts: DebtRow[] }>(`/api/admin/debts?${qs.toString()}`);
@@ -63,7 +69,7 @@ export default function DebtsPage() {
   useEffect(() => { load(); }, [statusFilter]);
 
   async function pay(d: DebtRow) {
-    if (!confirm(`Marquer payé: ${d.user_name} (${d.end_ts.substring(0, 7)}) = ${euros(d.amount_cents)} ?`)) return;
+    if (!confirm(`Marquer paye: ${d.user_name} (${periodLabel(d)}) = ${euros(d.amount_cents)} ?`)) return;
     try {
       await api("/api/admin/debts/pay", {
         method: "POST",
@@ -76,7 +82,7 @@ export default function DebtsPage() {
   }
 
   async function unpay(d: DebtRow) {
-    if (!confirm(`Annuler paiement: ${d.user_name} (${d.end_ts.substring(0, 7)}) ?`)) return;
+    if (!confirm(`Annuler paiement: ${d.user_name} (${periodLabel(d)}) ?`)) return;
     try {
       await api("/api/admin/debts/unpay", {
         method: "POST",
@@ -94,39 +100,38 @@ export default function DebtsPage() {
     <section style={{ display: "grid", gap: 12 }}>
       <h2 style={{ margin: 0 }}>Dettes</h2>
       <div style={{ padding: 12, border: "1px solid #333", borderRadius: 12 }}>
-        <h3 style={{ marginTop: 0 }}>Clôture mensuelle</h3>
+        <h3 style={{ marginTop: 0 }}>Cloture de periode</h3>
         <p style={{ opacity: 0.7, marginTop: 0 }}>
-          Par défaut : clôture le mois précédent (YYYY-MM). Bloquée si déjà clôturé.
+          La cloture prend la periode depuis la derniere cloture jusqu a maintenant.
         </p>
-      
+
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
-          <button onClick={closeMonthAction} style={{ fontWeight: 900 }}>
-            Clôturer
+          <input
+            value={comment}
+            onChange={(e) => setComment(e.target.value)}
+            placeholder="Commentaire (optionnel)"
+            style={{ padding: 8, minWidth: 240 }}
+          />
+          <button onClick={closePeriodAction} style={{ fontWeight: 900 }}>
+            Cloturer
           </button>
           {closeMsg && <span style={{ opacity: 0.85 }}>{closeMsg}</span>}
         </div>
       </div>
 
-    
-    
       <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
         <label>
           Statut{" "}
           <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value as any)}>
-            <option value="invoiced">Impayées</option>
-            <option value="paid">Payées</option>
+            <option value="invoiced">Impayees</option>
+            <option value="paid">Payees</option>
           </select>
         </label>
 
-        <label>
-          Mois (YYYY-MM){" "}
-          <input value={month} onChange={(e) => setMonth(e.target.value)} placeholder="2026-01" />
-        </label>
-
-        <button onClick={load}>Rafraîchir</button>
+        <button onClick={load}>Rafraichir</button>
 
         <span style={{ opacity: 0.7 }}>
-          Total affiché : <b>{euros(total)}</b>
+          Total affiche : <b>{euros(total)}</b>
         </span>
       </div>
 
@@ -145,29 +150,29 @@ export default function DebtsPage() {
               borderRadius: 10,
               padding: 10,
               display: "grid",
-              gridTemplateColumns: "2fr 1fr 1fr auto",
+              gridTemplateColumns: "2fr 1.4fr 1fr auto",
               gap: 8,
               alignItems: "center",
             }}
           >
             <div>
               <div style={{ fontWeight: 900 }}>{d.user_name}</div>
-              <div style={{ opacity: 0.7 }}>{d.user_email || "—"}</div>
+              <div style={{ opacity: 0.7 }}>{d.user_email || "--"}</div>
             </div>
 
             <div>
-              <div style={{ fontWeight: 800 }}>{d.end_ts.substring(0, 7)}</div>
-              <div style={{ opacity: 0.7 }}>{d.status === "paid" ? "Payée" : "Impayée"}</div>
+              <div style={{ fontWeight: 800 }}>{periodLabel(d)}</div>
+              <div style={{ opacity: 0.7 }}>{d.status === "paid" ? "Payee" : "Impayee"}</div>
             </div>
 
             <div>
               <div style={{ fontWeight: 900 }}>{euros(d.amount_cents)}</div>
-              <div style={{ opacity: 0.7 }}>{d.paid_at ? `Payé: ${d.paid_at}` : ""}</div>
+              <div style={{ opacity: 0.7 }}>{d.paid_at ? `Paye: ${d.paid_at}` : ""}</div>
             </div>
 
             <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
               {d.status === "invoiced" ? (
-                <button onClick={() => pay(d)} style={{ fontWeight: 900 }}>Marquer payé</button>
+                <button onClick={() => pay(d)} style={{ fontWeight: 900 }}>Marquer paye</button>
               ) : (
                 <button onClick={() => unpay(d)}>Annuler</button>
               )}
@@ -175,7 +180,7 @@ export default function DebtsPage() {
           </div>
         ))}
 
-        {debts.length === 0 && <p style={{ opacity: 0.7 }}>Aucune dette trouvée.</p>}
+        {debts.length === 0 && <p style={{ opacity: 0.7 }}>Aucune dette trouvee.</p>}
       </div>
     </section>
   );

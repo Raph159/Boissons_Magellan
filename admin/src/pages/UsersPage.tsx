@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { api } from "../lib/api";
 
 type UserRow = {
@@ -19,6 +19,10 @@ export default function UsersPage() {
   const [rfid, setRfid] = useState("");
   const [active, setActive] = useState(true);
 
+  const [badgeModalUser, setBadgeModalUser] = useState<UserRow | null>(null);
+  const [badgeInput, setBadgeInput] = useState("");
+  const badgeInputRef = useRef<HTMLInputElement | null>(null);
+
   async function load() {
     setError("");
     try {
@@ -30,6 +34,12 @@ export default function UsersPage() {
   }
 
   useEffect(() => { load(); }, []);
+
+  useEffect(() => {
+    if (!badgeModalUser) return;
+    const t = window.setTimeout(() => badgeInputRef.current?.focus(), 50);
+    return () => window.clearTimeout(t);
+  }, [badgeModalUser]);
 
   async function addUser() {
     if (!name.trim()) return;
@@ -43,7 +53,10 @@ export default function UsersPage() {
           is_active: active,
         }),
       });
-      setName(""); setEmail(""); setRfid(""); setActive(true);
+      setName("");
+      setEmail("");
+      setRfid("");
+      setActive(true);
       await load();
     } catch (e: any) {
       alert(e.message);
@@ -62,18 +75,26 @@ export default function UsersPage() {
     }
   }
 
-  async function linkBadge(u: UserRow) {
-    const uid = prompt("Nouveau badge (UID)", u.rfid_uid || "");
+  async function submitBadge() {
+    if (!badgeModalUser) return;
+    const uid = badgeInput.trim();
     if (!uid) return;
     try {
-      await api(`/api/admin/users/${u.id}/badge`, {
+      await api(`/api/admin/users/${badgeModalUser.id}/badge`, {
         method: "POST",
         body: JSON.stringify({ rfid_uid: uid }),
       });
+      setBadgeModalUser(null);
+      setBadgeInput("");
       await load();
     } catch (e: any) {
       alert(e.message);
     }
+  }
+
+  function openBadgeModal(u: UserRow) {
+    setBadgeInput(u.rfid_uid || "");
+    setBadgeModalUser(u);
   }
 
   async function rename(u: UserRow) {
@@ -105,7 +126,7 @@ export default function UsersPage() {
             Actif
           </label>
           <button onClick={addUser} style={{ fontWeight: 900 }}>Ajouter</button>
-          <button onClick={load}>Rafraîchir</button>
+          <button onClick={load}>Rafraichir</button>
         </div>
       </div>
 
@@ -138,22 +159,75 @@ export default function UsersPage() {
                 <div style={{ opacity: 0.7 }}>ID: {u.id}</div>
               </div>
 
-              <div style={{ opacity: 0.85 }}>{u.email || "—"}</div>
+              <div style={{ opacity: 0.85 }}>{u.email || "--"}</div>
 
               <div style={{ opacity: 0.85 }}>
-                Badge: <b>{u.rfid_uid || "—"}</b>
+                Badge: <b>{u.rfid_uid || "--"}</b>
               </div>
 
               <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", flexWrap: "wrap" }}>
                 <button onClick={() => rename(u)}>Renommer</button>
-                <button onClick={() => linkBadge(u)}>{u.rfid_uid ? "Changer badge" : "Lier badge"}</button>
-                <button onClick={() => toggleActive(u)}>{u.is_active === 1 ? "Désactiver" : "Activer"}</button>
+                <button onClick={() => openBadgeModal(u)}>{u.rfid_uid ? "Changer badge" : "Lier badge"}</button>
+                <button onClick={() => toggleActive(u)}>{u.is_active === 1 ? "Desactiver" : "Activer"}</button>
               </div>
             </div>
           ))}
           {users.length === 0 && <p style={{ opacity: 0.7 }}>Aucun utilisateur.</p>}
         </div>
       </div>
+
+      {badgeModalUser && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(7, 10, 12, 0.7)",
+            display: "grid",
+            placeItems: "center",
+            padding: 16,
+            zIndex: 1000,
+          }}
+          onClick={() => setBadgeModalUser(null)}
+        >
+          <div
+            style={{
+              width: "min(420px, 92vw)",
+              background: "var(--panel)",
+              border: "1px solid var(--border)",
+              borderRadius: 16,
+              padding: 20,
+              boxShadow: "var(--shadow)",
+              display: "grid",
+              gap: 12,
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div>
+              <div style={{ fontWeight: 700, fontSize: "1.1rem" }}>Scanner un badge</div>
+              <div style={{ opacity: 0.7 }}>
+                Scannez le badge RFID ou entrez le code manuellement.
+              </div>
+            </div>
+
+            <input
+              ref={badgeInputRef}
+              value={badgeInput}
+              onChange={(e) => setBadgeInput(e.target.value)}
+              placeholder="UID badge"
+              onKeyDown={(e) => {
+                if (e.key === "Enter") submitBadge();
+              }}
+            />
+
+            <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
+              <button onClick={() => setBadgeModalUser(null)}>Annuler</button>
+              <button onClick={submitBadge} disabled={!badgeInput.trim()} style={{ fontWeight: 700 }}>
+                Enregistrer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   );
 }

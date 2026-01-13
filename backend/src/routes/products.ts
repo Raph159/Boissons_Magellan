@@ -30,6 +30,7 @@ export async function productRoutes(app: FastifyInstance) {
       id: r.id,
       name: r.name,
       price_cents: r.price_cents ?? null,
+      qty: Number(r.qty) || 0,
       available: Number(r.qty) > 0,
     }));
 

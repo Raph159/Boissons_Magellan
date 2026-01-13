@@ -1,12 +1,12 @@
 :root {
-  --bg: #0b1415;
-  --panel: #111c1f;
-  --panel-2: #162328;
-  --border: #27363b;
+  --bg: #0b1214;
+  --panel: #101a1c;
+  --panel-2: #172126;
+  --border: #26343a;
   --text: #f2f7f7;
-  --muted: #9eb0b3;
-  --accent: #00f5d4;
-  --accent-2: #ffc961;
+  --muted: #98a8ad;
+  --accent: #44e2d2;
+  --accent-2: #9ff3e7;
   --shadow: 0 20px 50px rgba(0, 0, 0, 0.35);
 
   font-family: "IBM Plex Sans Condensed", "Manrope", "Segoe UI", sans-serif;
@@ -29,8 +29,8 @@ body {
   min-width: 320px;
   min-height: 100vh;
   background:
-    radial-gradient(1200px 700px at 10% -10%, rgba(0, 245, 212, 0.18), transparent 60%),
-    radial-gradient(900px 600px at 90% 10%, rgba(255, 201, 97, 0.16), transparent 60%),
+    radial-gradient(1200px 700px at 10% -10%, rgba(68, 226, 210, 0.2), transparent 60%),
+    radial-gradient(900px 600px at 90% 10%, rgba(24, 120, 122, 0.22), transparent 60%),
     linear-gradient(160deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0)),
     var(--bg);
   color: var(--text);
@@ -54,7 +54,7 @@ button {
 }
 
 button:hover {
-  border-color: rgba(0, 245, 212, 0.5);
+  border-color: rgba(68, 226, 210, 0.5);
   transform: translateY(-1px);
 }
 
@@ -81,6 +81,6 @@ input:focus,
 select:focus,
 textarea:focus,
 button:focus-visible {
-  box-shadow: 0 0 0 3px rgba(0, 245, 212, 0.25);
-  border-color: rgba(0, 245, 212, 0.7);
+  box-shadow: 0 0 0 3px rgba(68, 226, 210, 0.25);
+  border-color: rgba(68, 226, 210, 0.7);
 }

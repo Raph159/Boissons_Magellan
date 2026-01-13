@@ -1,8 +1,14 @@
-.kiosk-app {
+.kiosk-root {
   min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.kiosk-app {
   padding: 28px;
   display: grid;
   place-items: center;
+  flex: 1;
 }
 
 .badge-input {
@@ -13,63 +19,39 @@
   width: 1px;
 }
 
-.hero-card,
+.badge-card,
 .thanks-card,
 .kiosk-shell {
   width: min(1100px, 92vw);
 }
 
-.hero-card {
+.badge-card {
   padding: 48px;
   border-radius: 28px;
-  background:
-    linear-gradient(120deg, rgba(0, 245, 212, 0.18), rgba(0, 245, 212, 0)),
-    linear-gradient(210deg, rgba(255, 201, 97, 0.12), rgba(255, 201, 97, 0)),
-    var(--panel);
+  background: var(--panel);
   border: 1px solid var(--border);
   box-shadow: var(--shadow);
   text-align: center;
   animation: float-in 420ms ease-out;
+  display: grid;
+  gap: 16px;
+  justify-items: center;
 }
 
-.hero-badge {
-  display: inline-flex;
-  padding: 6px 14px;
-  border-radius: 999px;
-  letter-spacing: 0.3em;
-  font-size: 0.7rem;
-  text-transform: uppercase;
-  background: rgba(0, 245, 212, 0.16);
-  color: var(--accent);
-  font-weight: 700;
+.badge-logo {
+  width: min(360px, 70vw);
+  height: auto;
 }
 
-.hero-card h1 {
-  margin: 16px 0 8px;
+.badge-card h1 {
+  margin: 0;
   font-size: clamp(2rem, 4vw, 3rem);
 }
 
-.hero-status {
-  font-size: 1.1rem;
+.badge-status {
+  margin: 0;
+  font-size: 1.05rem;
   color: var(--muted);
-}
-
-.hero-hint {
-  margin-top: 18px;
-  display: grid;
-  gap: 6px;
-  color: var(--muted);
-}
-
-.hero-test {
-  font-weight: 600;
-  color: var(--accent-2);
-}
-
-.hero-debug {
-  margin-top: 20px;
-  font-size: 0.9rem;
-  color: rgba(255, 255, 255, 0.6);
 }
 
 .kiosk-shell {
@@ -156,7 +138,7 @@
 .product-tile {
   padding: 16px;
   border-radius: 16px;
-  border: 1px solid rgba(0, 245, 212, 0.2);
+  border: 1px solid rgba(68, 226, 210, 0.25);
   background: var(--panel-2);
   text-align: left;
   display: grid;
@@ -166,7 +148,7 @@
 
 .product-tile:hover {
   transform: translateY(-2px);
-  border-color: rgba(0, 245, 212, 0.6);
+  border-color: rgba(68, 226, 210, 0.6);
 }
 
 .product-tile.is-disabled {
@@ -243,8 +225,8 @@
 }
 
 .primary-button {
-  background: linear-gradient(120deg, rgba(0, 245, 212, 0.4), rgba(255, 201, 97, 0.4));
-  border: 1px solid rgba(0, 245, 212, 0.35);
+  background: linear-gradient(120deg, rgba(68, 226, 210, 0.4), rgba(159, 243, 231, 0.4));
+  border: 1px solid rgba(68, 226, 210, 0.35);
   color: var(--text);
   font-weight: 700;
   padding: 12px 16px;
@@ -349,7 +331,7 @@
   display: grid;
   place-items: center;
   margin: 0 auto 16px;
-  background: rgba(0, 245, 212, 0.2);
+  background: rgba(68, 226, 210, 0.2);
   color: var(--accent);
   font-size: 1.6rem;
   font-weight: 700;
@@ -381,12 +363,23 @@
     padding: 16px;
   }
 
-  .hero-card,
+  .badge-card,
   .thanks-card {
     padding: 28px;
+  }
+
+  .badge-logo {
+    width: min(260px, 70vw);
   }
 
   .products-grid {
     grid-template-columns: 1fr;
   }
+}
+
+.app-footer {
+  text-align: center;
+  color: var(--muted);
+  padding: 12px 0 16px;
+  font-size: 0.9rem;
 }

@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import "./App.css";
 
 type User = { id: number; name: string; is_active: number };
-type Product = { id: number; name: string; price_cents: number | null; available: boolean };
+type Product = { id: number; name: string; price_cents: number | null; qty: number; available: boolean };
 type Cart = Record<number, number>;
 type DebtItem = { product_id: number; product_name: string; qty: number };
 type DebtSummary = {
@@ -18,7 +18,7 @@ function euros(cents: number) {
 
 export default function App() {
   const [screen, setScreen] = useState<"badge" | "products" | "thanks" | "debt">("badge");
-  const [status, setStatus] = useState("Badger pour commencer");
+  const [status, setStatus] = useState("Pas de badge ? Contactez le comité.");
   const [user, setUser] = useState<User | null>(null);
 
   const [products, setProducts] = useState<Product[]>([]);
@@ -28,7 +28,6 @@ export default function App() {
 
   const inputRef = useRef<HTMLInputElement | null>(null);
   const bufferRef = useRef("");
-  const [debugBuffer, setDebugBuffer] = useState("");
 
   useEffect(() => {
     const focus = () => inputRef.current?.focus();
@@ -92,18 +91,27 @@ export default function App() {
     if (e.key === "Enter") {
       const uid = bufferRef.current;
       bufferRef.current = "";
-      setDebugBuffer("");
       if (uid) identify(uid);
       return;
     }
 
     if (e.key.length === 1) {
       bufferRef.current += e.key;
-      setDebugBuffer(bufferRef.current);
     }
   }
 
+  function remainingQty(productId: number) {
+    const product = products.find((p) => p.id === productId);
+    if (!product) return 0;
+    const inCart = cart[productId] || 0;
+    return Math.max(0, product.qty - inCart);
+  }
+
   function addToCart(productId: number) {
+    if (remainingQty(productId) <= 0) {
+      setStatus("Stock insuffisant.");
+      return;
+    }
     setCart((c) => ({ ...c, [productId]: (c[productId] || 0) + 1 }));
   }
 
@@ -156,189 +164,189 @@ export default function App() {
       setUser(null);
       setProducts([]);
       setCart({});
-      setStatus("Badger pour commencer");
+      setStatus("Badgez pour commencer");
       setScreen("badge");
     }, 3000);
   }
 
   return (
-    <main className="kiosk-app">
-      <input
-        ref={inputRef}
-        autoFocus
-        inputMode="none"
-        className="badge-input"
-        onKeyDown={screen === "badge" ? onBadgeKeyDown : undefined}
-      />
+    <div className="kiosk-root">
+      <main className="kiosk-app">
+        <input
+          ref={inputRef}
+          autoFocus
+          inputMode="none"
+          className="badge-input"
+          onKeyDown={screen === "badge" ? onBadgeKeyDown : undefined}
+        />
 
-      {screen === "badge" && (
-        <section className="hero-card">
-          <div className="hero-badge">KIOSK</div>
-          <h1>Boissons en libre-service</h1>
-          <p className="hero-status">{status}</p>
-          <div className="hero-hint">
-            <span>Badgez votre carte pour acceder au menu.</span>
-            <span className="hero-test">Test rapide: tapez TEST123 puis Enter.</span>
-          </div>
-          <div className="hero-debug">
-            Buffer debug: <strong>{debugBuffer || "--"}</strong>
-          </div>
-        </section>
-      )}
+        {screen === "badge" && (
+          <section className="badge-card">
+            <img className="badge-logo" src="/magellan-logo.png" alt="Magellan" />
+            <h1>Badgez pour commencer</h1>
+            <p className="badge-status">{status}</p>
+          </section>
+        )}
 
-      {screen === "products" && user && (
-        <section className="kiosk-shell">
-          <header className="kiosk-header">
-            <div>
-              <p className="kiosk-greeting">Bonjour</p>
-              <h2>{user.name}</h2>
-            </div>
-            <div className="header-actions">
-              <button
-                className="ghost-button"
-                onClick={async () => {
-                  await loadDebt(user.id);
-                  setScreen("debt");
-                }}
-              >
-                Ma dette
-              </button>
-              <button
-                className="ghost-button"
-                onClick={() => {
-                  setScreen("badge");
-                  setUser(null);
-                  setCart({});
-                  setStatus("Badger pour commencer");
-                }}
-              >
-                Deconnexion
-              </button>
-            </div>
-          </header>
-
-          <div className="kiosk-grid">
-            <section className="products-card">
-              <div className="section-title">
-                <h3>Boissons disponibles</h3>
-                <p>Choisissez vos produits, ils partent directement dans le panier.</p>
+        {screen === "products" && user && (
+          <section className="kiosk-shell">
+            <header className="kiosk-header">
+              <div>
+                <p className="kiosk-greeting">Bonjour</p>
+                <h2>{user.name}</h2>
               </div>
-              <div className="products-grid">
-                {products.map(p => (
+              <div className="header-actions">
+                <button
+                  className="ghost-button"
+                  onClick={async () => {
+                    await loadDebt(user.id);
+                    setScreen("debt");
+                  }}
+                >
+                  Ma dette
+                </button>
+                <button
+                  className="ghost-button"
+                  onClick={() => {
+                    setScreen("badge");
+                    setUser(null);
+                    setCart({});
+                    setStatus("Badgez pour commencer");
+                  }}
+                >
+                  Deconnexion
+                </button>
+              </div>
+            </header>
+
+            <div className="kiosk-grid">
+              <section className="products-card">
+                <div className="section-title">
+                  <h3>Boissons disponibles</h3>
+                  <p>Choisissez vos produits, ils partent directement dans le panier.</p>
+                </div>
+                <div className="products-grid">
+                {products.map(p => {
+                  const remaining = Math.max(0, p.qty - (cart[p.id] || 0));
+                  const canAdd = remaining > 0 && p.price_cents != null;
+                  return (
                   <button
                     key={p.id}
-                    disabled={!p.available || p.price_cents == null}
+                    disabled={!canAdd}
                     onClick={() => addToCart(p.id)}
-                    className={`product-tile ${p.available ? "" : "is-disabled"}`}
+                    className={`product-tile ${canAdd ? "" : "is-disabled"}`}
                   >
                     <div className="tile-title">{p.name}</div>
                     <div className="tile-meta">
                       <span>
                         {p.price_cents == null ? "Prix manquant" : euros(p.price_cents)}
                       </span>
-                      <span>{p.available ? "Dispo" : "Indispo"}</span>
+                      <span>{canAdd ? "Dispo" : "Indispo"}</span>
                     </div>
                   </button>
-                ))}
-              </div>
-            </section>
+                );
+                })}
+                </div>
+              </section>
 
-            <aside className="cart-card">
-              <div className="section-title">
-                <h3>Panier</h3>
-                <p>Verifiez vos choix avant de valider.</p>
-              </div>
+              <aside className="cart-card">
+                <div className="section-title">
+                  <h3>Panier</h3>
+                  <p>Verifiez vos choix avant de valider.</p>
+                </div>
 
-              {cartLines.length === 0 ? (
-                <p className="empty-state">Panier vide.</p>
-              ) : (
-                <div className="cart-list">
-                  {cartLines.map(l => (
-                    <div key={l.product.id} className="cart-line">
-                      <div>
-                        <div className="cart-name">{l.product.name}</div>
-                        <div className="cart-meta">
-                          {Number(l.qty)} x {euros(l.product.price_cents!)}
+                {cartLines.length === 0 ? (
+                  <p className="empty-state">Panier vide.</p>
+                ) : (
+                  <div className="cart-list">
+                    {cartLines.map(l => (
+                      <div key={l.product.id} className="cart-line">
+                        <div>
+                          <div className="cart-name">{l.product.name}</div>
+                          <div className="cart-meta">
+                            {Number(l.qty)} x {euros(l.product.price_cents!)}
+                          </div>
+                        </div>
+                        <div className="cart-actions">
+                          <button className="icon-button" onClick={() => removeFromCart(l.product.id)}>-</button>
+                          <button className="icon-button" onClick={() => addToCart(l.product.id)}>+</button>
                         </div>
                       </div>
-                      <div className="cart-actions">
-                        <button className="icon-button" onClick={() => removeFromCart(l.product.id)}>-</button>
-                        <button className="icon-button" onClick={() => addToCart(l.product.id)}>+</button>
-                      </div>
-                    </div>
-                  ))}
-
-                  <div className="cart-total">
-                    <span>Total</span>
-                    <span>{euros(totalCents)}</span>
-                  </div>
-
-                  <button className="primary-button" onClick={submitOrder}>
-                    Valider la commande
-                  </button>
-
-                  <p className="cart-status">{status}</p>
-                </div>
-              )}
-            </aside>
-          </div>
-        </section>
-      )}
-
-      {screen === "debt" && user && (
-        <section className="debt-card">
-          <header className="debt-header">
-            <div>
-              <p className="kiosk-greeting">Votre dette</p>
-              <h2>{user.name}</h2>
-            </div>
-            <button className="ghost-button" onClick={() => setScreen("products")}>
-              Retour
-            </button>
-          </header>
-
-          {debtError && <p className="debt-error">{debtError}</p>}
-
-          {!debt ? (
-            <p className="empty-state">Chargement...</p>
-          ) : (
-            <div className="debt-grid">
-              <div className="debt-total">
-                <span>Total impaye</span>
-                <strong>{euros(debt.total_cents)}</strong>
-                <div className="debt-split">
-                  <span>Cloture impayee: {euros(debt.unpaid_closed_cents)}</span>
-                  <span>En cours: {euros(debt.open_cents)}</span>
-                </div>
-              </div>
-
-              <div className="debt-items">
-                <h3>Consommations</h3>
-                {debt.items.length === 0 ? (
-                  <p className="empty-state">Aucune consommation en cours.</p>
-                ) : (
-                  <ul>
-                    {debt.items.map((item) => (
-                      <li key={item.product_id}>
-                        <span>{item.product_name}</span>
-                        <strong>{item.qty}</strong>
-                      </li>
                     ))}
-                  </ul>
-                )}
-              </div>
-            </div>
-          )}
-        </section>
-      )}
 
-      {screen === "thanks" && (
-        <section className="thanks-card">
-          <div className="thanks-icon">OK</div>
-          <h1>Merci !</h1>
-          <p>{status}</p>
-        </section>
-      )}
-    </main>
+                    <div className="cart-total">
+                      <span>Total</span>
+                      <span>{euros(totalCents)}</span>
+                    </div>
+
+                    <button className="primary-button" onClick={submitOrder}>
+                      Valider la commande
+                    </button>
+
+
+                  </div>
+                )}
+              </aside>
+            </div>
+          </section>
+        )}
+
+        {screen === "debt" && user && (
+          <section className="debt-card">
+            <header className="debt-header">
+              <div>
+                <p className="kiosk-greeting">Votre dette</p>
+                <h2>{user.name}</h2>
+              </div>
+              <button className="ghost-button" onClick={() => setScreen("products")}>
+                Retour
+              </button>
+            </header>
+
+            {debtError && <p className="debt-error">{debtError}</p>}
+
+            {!debt ? (
+              <p className="empty-state">Chargement...</p>
+            ) : (
+              <div className="debt-grid">
+                <div className="debt-total">
+                  <span>Total impaye</span>
+                  <strong>{euros(debt.total_cents)}</strong>
+                  <div className="debt-split">
+                    <span>Cloture impayee: {euros(debt.unpaid_closed_cents)}</span>
+                    <span>Depuis derniere cloture: {euros(debt.open_cents)}</span>
+                  </div>
+                </div>
+
+                <div className="debt-items">
+                  <h3>Consommations</h3>
+                  {debt.items.length === 0 ? (
+                    <p className="empty-state">Aucune consommation en cours.</p>
+                  ) : (
+                    <ul>
+                      {debt.items.map((item) => (
+                        <li key={item.product_id}>
+                          <span>{item.product_name}</span>
+                          <strong>{item.qty}</strong>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              </div>
+            )}
+          </section>
+        )}
+
+        {screen === "thanks" && (
+          <section className="thanks-card">
+            <div className="thanks-icon">OK</div>
+            <h1>Merci !</h1>
+            <p>{status}</p>
+          </section>
+        )}
+      </main>
+      <footer className="app-footer">Développé par Delens Raphaël</footer>
+    </div>
   );
 }

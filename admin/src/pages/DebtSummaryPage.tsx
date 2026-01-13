@@ -10,7 +10,6 @@ type SummaryRow = {
   total_cents: number;
 };
 
-
 type UserDebtRow = {
   period_id: string;
   start_ts: string;
@@ -22,14 +21,17 @@ type UserDebtRow = {
 };
 
 function euros(cents: number) {
-  return (cents / 100).toFixed(2) + " €";
+  return (cents / 100).toFixed(2) + " EUR";
+}
+
+function periodLabel(d: UserDebtRow) {
+  return `${d.start_ts} -> ${d.end_ts}`;
 }
 
 export default function DebtSummaryPage() {
   const [statusFilter, setStatusFilter] = useState<"invoiced" | "paid">("invoiced");
   const [rows, setRows] = useState<SummaryRow[]>([]);
   const [error, setError] = useState("");
-  const [currentMonth, setCurrentMonth] = useState<string>("");
 
   const [selectedUser, setSelectedUser] = useState<{
     id: number; name: string; email: string | null;
@@ -45,7 +47,6 @@ export default function DebtSummaryPage() {
       const qs = new URLSearchParams();
       qs.set("status", statusFilter);
       const data = await api<{ month_key: string; summary: SummaryRow[] }>(`/api/admin/debts/summary-current?${qs.toString()}`);
-      setCurrentMonth(data.month_key);
       setRows(data.summary);
     } catch (e: any) {
       setError(e.message);
@@ -68,22 +69,23 @@ export default function DebtSummaryPage() {
   useEffect(() => { load(); }, [statusFilter]);
 
   const totalAll = useMemo(() => rows.reduce((s, r) => s + r.total_cents, 0), [rows]);
+  const openLabel = "Periode en cours";
 
   return (
     <section style={{ display: "grid", gap: 12 }}>
-      <h2 style={{ margin: 0 }}>Résumé des dettes</h2>
+      <h2 style={{ margin: 0 }}>Resume des dettes</h2>
 
       <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
         <label>
           Statut{" "}
           <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value as any)}>
-            <option value="invoiced">Impayées</option>
-            <option value="paid">Payées</option>
+            <option value="invoiced">Impayees</option>
+            <option value="paid">Payees</option>
           </select>
         </label>
-        <button onClick={load}>Rafraîchir</button>
+        <button onClick={load}>Rafraichir</button>
         <span style={{ opacity: 0.7 }}>
-          Total ({statusFilter === "invoiced" ? "impayé" : "payé"}) : <b>{euros(totalAll)}</b>
+          Total ({statusFilter === "invoiced" ? "impaye" : "paye"}) : <b>{euros(totalAll)}</b>
         </span>
       </div>
 
@@ -94,12 +96,11 @@ export default function DebtSummaryPage() {
       )}
 
       <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 12 }}>
-        {/* LEFT: summary */}
         <div style={{ border: "1px solid #333", borderRadius: 12, padding: 12 }}>
           <h3 style={{ marginTop: 0 }}>Par personne</h3>
 
           {rows.length === 0 ? (
-            <p style={{ opacity: 0.7 }}>Aucune donnée.</p>
+            <p style={{ opacity: 0.7 }}>Aucune donnee.</p>
           ) : (
             <div style={{ display: "grid", gap: 8 }}>
               {rows.map((r) => (
@@ -117,14 +118,13 @@ export default function DebtSummaryPage() {
                   <div style={{ display: "flex", justifyContent: "space-between", gap: 10 }}>
                     <div>
                       <div style={{ fontWeight: 900 }}>{r.user_name}</div>
-                      <div style={{ opacity: 0.7 }}>{r.user_email || "—"}</div>
+                      <div style={{ opacity: 0.7 }}>{r.user_email || "--"}</div>
                     </div>
                     <div style={{ textAlign: "right" }}>
                       <div style={{ fontWeight: 900 }}>{euros(r.total_cents)}</div>
-                      <div style={{ opacity: 0.7 }}>Clôturé impayé: {euros(r.unpaid_closed_cents)}</div>
-                      <div style={{ opacity: 0.7 }}>{currentMonth}: {euros(r.open_month_cents)}</div>
+                      <div style={{ opacity: 0.7 }}>Cloture impayee: {euros(r.unpaid_closed_cents)}</div>
+                      <div style={{ opacity: 0.7 }}>{openLabel}: {euros(r.open_month_cents)}</div>
                     </div>
-
                   </div>
                 </button>
               ))}
@@ -132,17 +132,16 @@ export default function DebtSummaryPage() {
           )}
         </div>
 
-        {/* RIGHT: details */}
         <div style={{ border: "1px solid #333", borderRadius: 12, padding: 12 }}>
-          <h3 style={{ marginTop: 0 }}>Détail</h3>
+          <h3 style={{ marginTop: 0 }}>Detail</h3>
 
           {!selectedUser ? (
-            <p style={{ opacity: 0.7 }}>Clique une personne à gauche.</p>
+            <p style={{ opacity: 0.7 }}>Clique une personne a gauche.</p>
           ) : (
             <>
               <div style={{ marginBottom: 10 }}>
                 <div style={{ fontWeight: 900 }}>{selectedUser.name}</div>
-                <div style={{ opacity: 0.7 }}>{selectedUser.email || "—"}</div>
+                <div style={{ opacity: 0.7 }}>{selectedUser.email || "--"}</div>
               </div>
 
               {detailError && (
@@ -152,7 +151,7 @@ export default function DebtSummaryPage() {
               )}
 
               {detail.length === 0 ? (
-                <p style={{ opacity: 0.7 }}>Aucun mois.</p>
+                <p style={{ opacity: 0.7 }}>Aucune periode.</p>
               ) : (
                 <div style={{ display: "grid", gap: 8 }}>
                   {detail.map((d) => (
@@ -168,9 +167,9 @@ export default function DebtSummaryPage() {
                       }}
                     >
                       <div>
-                        <div style={{ fontWeight: 900 }}>{d.end_ts.substring(0, 7)}</div>
+                        <div style={{ fontWeight: 900 }}>{periodLabel(d)}</div>
                         <div style={{ opacity: 0.7 }}>
-                          {d.status === "paid" ? `Payé: ${d.paid_at}` : "Impayé"}
+                          {d.status === "paid" ? `Paye: ${d.paid_at}` : "Impaye"}
                         </div>
                       </div>
                       <div style={{ fontWeight: 900 }}>{euros(d.amount_cents)}</div>

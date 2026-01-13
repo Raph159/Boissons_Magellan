@@ -9,8 +9,8 @@ export default function ProductsPage() {
 
   // add product
   const [newName, setNewName] = useState("");
-  const [newPrice, setNewPrice] = useState<number>(0);
-  const [newQty, setNewQty] = useState<number>(0);
+  const [newPrice, setNewPrice] = useState<number>();
+  const [newQty, setNewQty] = useState<number>();
 
   async function load() {
     setError("");
@@ -96,19 +96,26 @@ export default function ProductsPage() {
       <div style={{ padding: 12, border: "1px solid #333", borderRadius: 12 }}>
         <h3 style={{ marginTop: 0 }}>Ajouter un produit</h3>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+
           <input
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
             placeholder="Nom (ex: Sprite)"
             style={{ padding: 8, minWidth: 220 }}
           />
+
+          <p>Prix (en centimes) :</p>
+
           <input
             type="number"
             value={newPrice}
             onChange={(e) => setNewPrice(Number(e.target.value))}
-            placeholder="prix_cents"
+            placeholder="100 = 1€"
             style={{ padding: 8, width: 140 }}
           />
+
+          <p>Quantité initiale :</p>
+
           <input
             type="number"
             value={newQty}
@@ -117,9 +124,7 @@ export default function ProductsPage() {
             style={{ padding: 8, width: 140 }}
           />
           <button onClick={addProduct} style={{ fontWeight: 800 }}>Ajouter</button>
-          <span style={{ opacity: 0.7 }}>
-            prix_cents : 110 = 1.10€
-          </span>
+      
         </div>
       </div>
 

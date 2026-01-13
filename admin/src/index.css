@@ -1,13 +1,13 @@
 :root {
-  --bg: #0f1214;
-  --bg-soft: #151a1f;
-  --panel: #161c21;
-  --panel-2: #1d242a;
-  --border: #2d3841;
-  --text: #f4f6f7;
-  --muted: #a8b0b7;
-  --accent: #f8be50;
-  --shadow: 0 18px 40px rgba(0, 0, 0, 0.25);
+  --bg: #0b1214;
+  --bg-soft: #12191c;
+  --panel: #121a1d;
+  --panel-2: #182126;
+  --border: #27343a;
+  --text: #f2f7f7;
+  --muted: #98a8ad;
+  --accent: #44e2d2;
+  --shadow: 0 18px 40px rgba(0, 0, 0, 0.28);
 
   font-family: "Space Grotesk", "Sora", "Outfit", "Segoe UI", sans-serif;
   line-height: 1.5;
@@ -29,8 +29,8 @@ body {
   min-width: 320px;
   min-height: 100vh;
   background:
-    radial-gradient(1200px 600px at 20% -10%, rgba(248, 190, 80, 0.18), transparent 60%),
-    radial-gradient(900px 500px at 90% 10%, rgba(88, 180, 190, 0.18), transparent 60%),
+    radial-gradient(1200px 600px at 20% -10%, rgba(68, 226, 210, 0.2), transparent 60%),
+    radial-gradient(900px 500px at 90% 10%, rgba(24, 120, 122, 0.24), transparent 60%),
     linear-gradient(135deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0) 60%),
     var(--bg);
   color: var(--text);
@@ -58,7 +58,7 @@ button {
 }
 
 button:hover {
-  border-color: rgba(248, 190, 80, 0.5);
+  border-color: rgba(68, 226, 210, 0.5);
   transform: translateY(-1px);
 }
 
@@ -89,8 +89,8 @@ input:focus,
 select:focus,
 textarea:focus,
 button:focus-visible {
-  box-shadow: 0 0 0 3px rgba(248, 190, 80, 0.25);
-  border-color: rgba(248, 190, 80, 0.7);
+  box-shadow: 0 0 0 3px rgba(68, 226, 210, 0.25);
+  border-color: rgba(68, 226, 210, 0.7);
 }
 
 section {
