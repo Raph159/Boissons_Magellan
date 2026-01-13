@@ -20,7 +20,8 @@ function euros(cents: number) {
 
 export default function DebtsPage() {
   const [closeMsg, setCloseMsg] = useState<string>("");
-  const [closeMonth, setCloseMonth] = useState<string>(""); // optionnel
+  const [closeMonth] = useState<string>("");
+
 
   const [statusFilter, setStatusFilter] = useState<"invoiced" | "paid">("invoiced");
   const [month, setMonth] = useState<string>("");
