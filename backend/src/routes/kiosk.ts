@@ -16,13 +16,19 @@ export async function kioskRoutes(app: FastifyInstance) {
     const uid = parsed.data.uid.trim();
 
     const db = getDB();
+    type DbUser = {
+      id: number;
+      name: string;
+      rfid_uid: string;
+      is_active: number; // 0/1 en SQLite
+    };
     const user = db
       .prepare(
         `SELECT id, name, email, rfid_uid, is_active
          FROM users
          WHERE rfid_uid = ?`
       )
-      .get(uid);
+      .get(uid) as DbUser | undefined;
 
     if (!user) {
       return reply.code(404).send({ error: "Badge not recognized" });
