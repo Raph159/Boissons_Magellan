@@ -15,53 +15,86 @@ export default function App() {
   const tokenSaved = useMemo(() => getAdminToken(), [tokenInput]);
 
   return (
-    <div style={{ minHeight: "100vh", fontFamily: "system-ui", padding: 16 }}>
-      <header style={{ display: "flex", gap: 12, alignItems: "center", justifyContent: "space-between" }}>
-        <div style={{ display: "flex", gap: 8, alignItems: "baseline" }}>
-          <h1 style={{ margin: 0, fontWeight: 900 }}>Admin Boissons</h1>
-          <span style={{ opacity: 0.6 }}>VPN only</span>
-        </div>
+    <div className="admin-app">
+      <div className="app-shell">
+        <header className="admin-header">
+          <div className="brand">
+            <div className="brand-title">
+              <h1>Admin Boissons</h1>
+              <span className="badge">VPN only</span>
+            </div>
+            <p className="brand-subtitle">
+              Gestion des produits, stocks et dettes depuis un seul espace.
+            </p>
+          </div>
 
-        <nav style={{ display: "flex", gap: 8 }}>
-          <button onClick={() => setPage("products")} disabled={page === "products"}>Produits</button>
-          <button onClick={() => setPage("restock")} disabled={page === "restock"}>Restock</button>
-          <button onClick={() => setPage("debts")} disabled={page === "debts"}>Dettes</button>
-          <button onClick={() => setPage("summary")} disabled={page === "summary"}>Résumé</button>
-          <button onClick={() => setPage("users")} disabled={page === "users"}>Users</button>
-        </nav>
-      </header>
+          <nav className="admin-nav">
+            <button
+              className={`nav-button ${page === "products" ? "active" : ""}`}
+              onClick={() => setPage("products")}
+            >
+              Produits
+            </button>
+            <button
+              className={`nav-button ${page === "restock" ? "active" : ""}`}
+              onClick={() => setPage("restock")}
+            >
+              Restock
+            </button>
+            <button
+              className={`nav-button ${page === "debts" ? "active" : ""}`}
+              onClick={() => setPage("debts")}
+            >
+              Dettes
+            </button>
+            <button
+              className={`nav-button ${page === "summary" ? "active" : ""}`}
+              onClick={() => setPage("summary")}
+            >
+              Resume
+            </button>
+            <button
+              className={`nav-button ${page === "users" ? "active" : ""}`}
+              onClick={() => setPage("users")}
+            >
+              Utilisateurs
+            </button>
+          </nav>
+        </header>
 
-      <section style={{ marginTop: 16, padding: 12, border: "1px solid #333", borderRadius: 12 }}>
-        <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
-          <label style={{ fontWeight: 700 }}>Token admin :</label>
-          <input
-            type="password"
-            value={tokenInput}
-            onChange={(e) => setTokenInput(e.target.value)}
-            placeholder="x-admin-token"
-            style={{ padding: 8, minWidth: 260 }}
-          />
-          <button
-            onClick={() => {
-              setAdminToken(tokenInput.trim());
-              alert("Token enregistré ✅");
-            }}
-          >
-            Enregistrer
-          </button>
-          <span style={{ opacity: 0.7 }}>
-            {tokenSaved ? "Token présent ✅" : "Aucun token ❌"}
-          </span>
-        </div>
-      </section>
+        <section className="token-card">
+          <div className="token-row">
+            <div className="token-field">
+              <label>Token admin</label>
+              <input
+                type="password"
+                value={tokenInput}
+                onChange={(e) => setTokenInput(e.target.value)}
+                placeholder="x-admin-token"
+              />
+            </div>
+            <button
+              className="primary-button"
+              onClick={() => {
+                setAdminToken(tokenInput.trim());
+              }}
+            >
+              Enregistrer
+            </button>
+            <span className={`token-status ${tokenSaved ? "ok" : "warn"}`}>
+              {tokenSaved ? "Token present" : "Aucun token"}
+            </span>
+          </div>
+        </section>
 
-      <main style={{ marginTop: 16 }}>
-        {page === "products" && <ProductsPage />}
-        {page === "restock" && <RestockPage />}
-        {page === "debts" && <DebtsPage />}
-        {page === "summary" && <DebtSummaryPage />}
-        {page === "users" && <UsersPage />}
-      </main>
+        <main className="page-main">
+          {page === "products" && <ProductsPage />}
+          {page === "restock" && <RestockPage />}
+          {page === "debts" && <DebtsPage />}
+          {page === "summary" && <DebtSummaryPage />}
+          {page === "users" && <UsersPage />}
+        </main>
+      </div>
     </div>
   );
 }

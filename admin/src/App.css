@@ -1,42 +1,162 @@
-#root {
-  max-width: 1280px;
+.admin-app {
+  min-height: 100vh;
+  padding: 24px;
+}
+
+.app-shell {
+  max-width: 1200px;
   margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
+  display: grid;
+  gap: 20px;
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
+.admin-header {
+  display: grid;
+  gap: 18px;
+  padding: 22px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background:
+    linear-gradient(135deg, rgba(248, 190, 80, 0.08), rgba(248, 190, 80, 0)) ,
+    var(--panel);
+  box-shadow: var(--shadow);
 }
 
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
+.brand {
+  display: grid;
+  gap: 6px;
+}
+
+.brand-title {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+}
+
+.brand-title h1 {
+  margin: 0;
+  font-size: clamp(1.8rem, 2.5vw, 2.6rem);
+  letter-spacing: -0.02em;
+}
+
+.brand-subtitle {
+  margin: 0;
+  color: var(--muted);
+  max-width: 640px;
+}
+
+.badge {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(248, 190, 80, 0.12);
+  color: var(--accent);
+}
+
+.admin-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.nav-button {
+  border-radius: 999px;
+  border: 1px solid transparent;
+  background: var(--panel-2);
+  color: var(--text);
+  padding: 10px 18px;
+  font-weight: 600;
+  transition: transform 120ms ease, border-color 120ms ease, background 120ms ease;
+}
+
+.nav-button:hover {
+  border-color: var(--accent);
+  transform: translateY(-1px);
+}
+
+.nav-button.active {
+  background: rgba(248, 190, 80, 0.16);
+  border-color: rgba(248, 190, 80, 0.5);
+  color: var(--accent);
+}
+
+.token-card {
+  padding: 18px 22px;
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  box-shadow: var(--shadow);
+}
+
+.token-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  align-items: flex-end;
+}
+
+.token-field {
+  display: grid;
+  gap: 6px;
+  min-width: min(360px, 100%);
+  flex: 1;
+}
+
+.token-field label {
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.primary-button {
+  background: var(--accent);
+  border: 1px solid rgba(248, 190, 80, 0.4);
+  color: #1b1610;
+  font-weight: 700;
+  border-radius: 12px;
+  padding: 10px 18px;
+}
+
+.primary-button:hover {
+  filter: brightness(1.05);
+}
+
+.token-status {
+  font-weight: 600;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: var(--panel-2);
+  color: var(--muted);
+}
+
+.token-status.ok {
+  background: rgba(95, 205, 135, 0.2);
+  color: #8be3aa;
+}
+
+.token-status.warn {
+  background: rgba(255, 136, 106, 0.2);
+  color: #ffb39a;
+}
+
+.page-main {
+  display: grid;
+  gap: 16px;
+}
+
+@media (max-width: 720px) {
+  .admin-app {
+    padding: 16px;
   }
-  to {
-    transform: rotate(360deg);
+
+  .admin-header,
+  .token-card {
+    padding: 16px;
   }
-}
 
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
+  .token-row {
+    align-items: stretch;
   }
-}
-
-.card {
-  padding: 2em;
-}
-
-.read-the-docs {
-  color: #888;
 }

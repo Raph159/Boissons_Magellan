@@ -4,16 +4,28 @@ import "./App.css";
 type User = { id: number; name: string; is_active: number };
 type Product = { id: number; name: string; price_cents: number | null; available: boolean };
 type Cart = Record<number, number>;
+type DebtItem = { product_id: number; product_name: string; qty: number };
+type DebtSummary = {
+  unpaid_closed_cents: number;
+  open_cents: number;
+  total_cents: number;
+  items: DebtItem[];
+};
+
+function euros(cents: number) {
+  return (cents / 100).toFixed(2) + " EUR";
+}
 
 export default function App() {
-  const [screen, setScreen] = useState<"badge" | "products" | "thanks">("badge");
+  const [screen, setScreen] = useState<"badge" | "products" | "thanks" | "debt">("badge");
   const [status, setStatus] = useState("Badger pour commencer");
   const [user, setUser] = useState<User | null>(null);
 
   const [products, setProducts] = useState<Product[]>([]);
   const [cart, setCart] = useState<Cart>({});
+  const [debt, setDebt] = useState<DebtSummary | null>(null);
+  const [debtError, setDebtError] = useState("");
 
-  // --- badge input (invisible) ---
   const inputRef = useRef<HTMLInputElement | null>(null);
   const bufferRef = useRef("");
   const [debugBuffer, setDebugBuffer] = useState("");
@@ -47,7 +59,7 @@ export default function App() {
 
     const data = await res.json();
     setUser(data.user);
-    setStatus(`Bonjour ${data.user.name} ✅`);
+    setStatus(`Bonjour ${data.user.name}.`);
 
     await loadProducts();
     setCart({});
@@ -58,6 +70,20 @@ export default function App() {
     const res = await fetch("/api/kiosk/products");
     const data = await res.json();
     setProducts(data.products);
+  }
+
+  async function loadDebt(userId: number) {
+    setDebtError("");
+    const res = await fetch(`/api/kiosk/debt/${userId}`);
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      setDebtError(err.error || `Erreur (${res.status})`);
+      setDebt(null);
+      return;
+    }
+
+    const data = await res.json();
+    setDebt(data);
   }
 
   function onBadgeKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
@@ -124,9 +150,8 @@ export default function App() {
     }
 
     setScreen("thanks");
-    setStatus("Merci ! ✅");
+    setStatus("Merci !");
 
-    // reset après 3s
     setTimeout(() => {
       setUser(null);
       setProducts([]);
@@ -137,108 +162,182 @@ export default function App() {
   }
 
   return (
-    <main style={{ minHeight: "100vh", display: "grid", placeItems: "center", fontFamily: "system-ui" }}>
+    <main className="kiosk-app">
       <input
         ref={inputRef}
         autoFocus
         inputMode="none"
-        style={{ position: "absolute", opacity: 0, pointerEvents: "none", height: 1, width: 1 }}
+        className="badge-input"
         onKeyDown={screen === "badge" ? onBadgeKeyDown : undefined}
       />
 
       {screen === "badge" && (
-        <div style={{ textAlign: "center" }}>
-          <h1 style={{ fontSize: 48, fontWeight: 900, margin: 0 }}>Kiosk</h1>
-          <p style={{ fontSize: 20 }}>{status}</p>
-          <p style={{ opacity: 0.5, fontSize: 14 }}>Buffer (debug) : {debugBuffer || "—"}</p>
-          <p style={{ opacity: 0.7 }}>Test : tape <b>TEST123</b> puis Enter</p>
-        </div>
+        <section className="hero-card">
+          <div className="hero-badge">KIOSK</div>
+          <h1>Boissons en libre-service</h1>
+          <p className="hero-status">{status}</p>
+          <div className="hero-hint">
+            <span>Badgez votre carte pour acceder au menu.</span>
+            <span className="hero-test">Test rapide: tapez TEST123 puis Enter.</span>
+          </div>
+          <div className="hero-debug">
+            Buffer debug: <strong>{debugBuffer || "--"}</strong>
+          </div>
+        </section>
       )}
 
       {screen === "products" && user && (
-        <div style={{ width: "min(900px, 92vw)", display: "grid", gap: 16 }}>
-          <header style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-            <h1 style={{ margin: 0 }}>Bonjour {user.name}</h1>
-            <button onClick={() => { setScreen("badge"); setUser(null); setCart({}); setStatus("Badger pour commencer"); }}>
-              Déconnexion
-            </button>
+        <section className="kiosk-shell">
+          <header className="kiosk-header">
+            <div>
+              <p className="kiosk-greeting">Bonjour</p>
+              <h2>{user.name}</h2>
+            </div>
+            <div className="header-actions">
+              <button
+                className="ghost-button"
+                onClick={async () => {
+                  await loadDebt(user.id);
+                  setScreen("debt");
+                }}
+              >
+                Ma dette
+              </button>
+              <button
+                className="ghost-button"
+                onClick={() => {
+                  setScreen("badge");
+                  setUser(null);
+                  setCart({});
+                  setStatus("Badger pour commencer");
+                }}
+              >
+                Deconnexion
+              </button>
+            </div>
           </header>
 
-          <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 16 }}>
-            <section style={{ border: "1px solid #333", borderRadius: 12, padding: 12 }}>
-              <h2>Boissons</h2>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 12 }}>
+          <div className="kiosk-grid">
+            <section className="products-card">
+              <div className="section-title">
+                <h3>Boissons disponibles</h3>
+                <p>Choisissez vos produits, ils partent directement dans le panier.</p>
+              </div>
+              <div className="products-grid">
                 {products.map(p => (
                   <button
                     key={p.id}
                     disabled={!p.available || p.price_cents == null}
                     onClick={() => addToCart(p.id)}
-                    style={{
-                      padding: 16,
-                      borderRadius: 12,
-                      border: "1px solid #444",
-                      opacity: p.available ? 1 : 0.4,
-                      cursor: p.available ? "pointer" : "not-allowed",
-                      textAlign: "left"
-                    }}
+                    className={`product-tile ${p.available ? "" : "is-disabled"}`}
                   >
-                    <div style={{ fontWeight: 800, fontSize: 18 }}>{p.name}</div>
-                    <div style={{ opacity: 0.8 }}>
-                      {p.price_cents == null ? "Prix manquant" : `${(p.price_cents / 100).toFixed(2)} €`}
-                      {" · "}
-                      {p.available ? "Dispo" : "Indispo"}
+                    <div className="tile-title">{p.name}</div>
+                    <div className="tile-meta">
+                      <span>
+                        {p.price_cents == null ? "Prix manquant" : euros(p.price_cents)}
+                      </span>
+                      <span>{p.available ? "Dispo" : "Indispo"}</span>
                     </div>
                   </button>
                 ))}
               </div>
             </section>
 
-            <aside style={{ border: "1px solid #333", borderRadius: 12, padding: 12 }}>
-              <h2>Panier</h2>
+            <aside className="cart-card">
+              <div className="section-title">
+                <h3>Panier</h3>
+                <p>Verifiez vos choix avant de valider.</p>
+              </div>
 
               {cartLines.length === 0 ? (
-                <p style={{ opacity: 0.7 }}>Vide</p>
+                <p className="empty-state">Panier vide.</p>
               ) : (
-                <div style={{ display: "grid", gap: 8 }}>
+                <div className="cart-list">
                   {cartLines.map(l => (
-                    <div key={l.product.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <div key={l.product.id} className="cart-line">
                       <div>
-                        <div style={{ fontWeight: 700 }}>{l.product.name}</div>
-                        <div style={{ opacity: 0.7 }}>{(Number(l.qty))} × {(l.product.price_cents!/100).toFixed(2)} €</div>
+                        <div className="cart-name">{l.product.name}</div>
+                        <div className="cart-meta">
+                          {Number(l.qty)} x {euros(l.product.price_cents!)}
+                        </div>
                       </div>
-                      <div style={{ display: "flex", gap: 8 }}>
-                        <button onClick={() => removeFromCart(l.product.id)}>-</button>
-                        <button onClick={() => addToCart(l.product.id)}>+</button>
+                      <div className="cart-actions">
+                        <button className="icon-button" onClick={() => removeFromCart(l.product.id)}>-</button>
+                        <button className="icon-button" onClick={() => addToCart(l.product.id)}>+</button>
                       </div>
                     </div>
                   ))}
 
-                  <hr style={{ opacity: 0.2 }} />
-                  <div style={{ display: "flex", justifyContent: "space-between", fontWeight: 900 }}>
+                  <div className="cart-total">
                     <span>Total</span>
-                    <span>{(totalCents / 100).toFixed(2)} €</span>
+                    <span>{euros(totalCents)}</span>
                   </div>
 
-                  <button
-                    onClick={submitOrder}
-                    style={{ padding: 14, borderRadius: 12, fontWeight: 900 }}
-                  >
-                    Valider
+                  <button className="primary-button" onClick={submitOrder}>
+                    Valider la commande
                   </button>
 
-                  <p style={{ opacity: 0.7 }}>{status}</p>
+                  <p className="cart-status">{status}</p>
                 </div>
               )}
             </aside>
           </div>
-        </div>
+        </section>
+      )}
+
+      {screen === "debt" && user && (
+        <section className="debt-card">
+          <header className="debt-header">
+            <div>
+              <p className="kiosk-greeting">Votre dette</p>
+              <h2>{user.name}</h2>
+            </div>
+            <button className="ghost-button" onClick={() => setScreen("products")}>
+              Retour
+            </button>
+          </header>
+
+          {debtError && <p className="debt-error">{debtError}</p>}
+
+          {!debt ? (
+            <p className="empty-state">Chargement...</p>
+          ) : (
+            <div className="debt-grid">
+              <div className="debt-total">
+                <span>Total impaye</span>
+                <strong>{euros(debt.total_cents)}</strong>
+                <div className="debt-split">
+                  <span>Cloture impayee: {euros(debt.unpaid_closed_cents)}</span>
+                  <span>En cours: {euros(debt.open_cents)}</span>
+                </div>
+              </div>
+
+              <div className="debt-items">
+                <h3>Consommations</h3>
+                {debt.items.length === 0 ? (
+                  <p className="empty-state">Aucune consommation en cours.</p>
+                ) : (
+                  <ul>
+                    {debt.items.map((item) => (
+                      <li key={item.product_id}>
+                        <span>{item.product_name}</span>
+                        <strong>{item.qty}</strong>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </div>
+          )}
+        </section>
       )}
 
       {screen === "thanks" && (
-        <div style={{ textAlign: "center" }}>
-          <h1 style={{ fontSize: 56, margin: 0 }}>Merci !</h1>
-          <p style={{ opacity: 0.8 }}>{status}</p>
-        </div>
+        <section className="thanks-card">
+          <div className="thanks-icon">OK</div>
+          <h1>Merci !</h1>
+          <p>{status}</p>
+        </section>
       )}
     </main>
   );
