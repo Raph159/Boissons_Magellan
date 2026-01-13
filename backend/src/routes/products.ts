@@ -1,5 +1,6 @@
 import type { FastifyInstance } from "fastify";
 import { getDB } from "../db/db.js";
+import { loadProductSlugs } from "../lib/productSlug.js";
 
 export async function productRoutes(app: FastifyInstance) {
   app.get("/api/kiosk/products", async () => {
@@ -26,12 +27,14 @@ export async function productRoutes(app: FastifyInstance) {
     `).all() as Array<any>;
 
     // Kiosk: seulement dispo/pas dispo (mais on renvoie quand même le prix pour l'affichage)
+    const slugs = loadProductSlugs();
     const products = rows.map(r => ({
       id: r.id,
       name: r.name,
       price_cents: r.price_cents ?? null,
       qty: Number(r.qty) || 0,
       available: Number(r.qty) > 0,
+      image_slug: slugs[String(r.id)] ?? null,
     }));
 
     return { products };

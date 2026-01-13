@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import "./App.css";
 
 type User = { id: number; name: string; is_active: number };
-type Product = { id: number; name: string; price_cents: number | null; qty: number; available: boolean };
+type Product = { id: number; name: string; price_cents: number | null; qty: number; available: boolean; image_slug?: string | null };
 type Cart = Record<number, number>;
 type DebtItem = { product_id: number; product_name: string; qty: number };
 type DebtSummary = {
@@ -25,6 +25,7 @@ export default function App() {
   const [cart, setCart] = useState<Cart>({});
   const [debt, setDebt] = useState<DebtSummary | null>(null);
   const [debtError, setDebtError] = useState("");
+  const [imageErrors, setImageErrors] = useState<Record<string, true>>({});
 
   const inputRef = useRef<HTMLInputElement | null>(null);
   const bufferRef = useRef("");
@@ -229,6 +230,8 @@ export default function App() {
                 {products.map(p => {
                   const remaining = Math.max(0, p.qty - (cart[p.id] || 0));
                   const canAdd = remaining > 0 && p.price_cents != null;
+                  const slug = p.image_slug || "";
+                  const showImage = slug && !imageErrors[slug];
                   return (
                   <button
                     key={p.id}
@@ -236,12 +239,25 @@ export default function App() {
                     onClick={() => addToCart(p.id)}
                     className={`product-tile ${canAdd ? "" : "is-disabled"}`}
                   >
-                    <div className="tile-title">{p.name}</div>
-                    <div className="tile-meta">
-                      <span>
+                    <div className="tile-row">
+                      {showImage && (
+                        <img
+                          className="tile-thumb"
+                          src={`/products/${slug}.png`}
+                          alt={p.name}
+                          loading="lazy"
+                          onError={() =>
+                            setImageErrors((prev) => ({ ...prev, [slug]: true }))
+                          }
+                        />
+                      )}
+                      <div className="tile-info">
+                        <div className="tile-title">{p.name}</div>
+                        <div className="tile-status">{canAdd ? "Dispo" : "Indispo"}</div>
+                      </div>
+                      <div className="tile-price">
                         {p.price_cents == null ? "Prix manquant" : euros(p.price_cents)}
-                      </span>
-                      <span>{canAdd ? "Dispo" : "Indispo"}</span>
+                      </div>
                     </div>
                   </button>
                 );
@@ -283,7 +299,7 @@ export default function App() {
                       Valider la commande
                     </button>
 
-
+                    <p className="cart-status">{status}</p>
                   </div>
                 )}
               </aside>
@@ -346,7 +362,7 @@ export default function App() {
           </section>
         )}
       </main>
-      <footer className="app-footer">Développé par Delens Raphaël</footer>
+      <footer className="app-footer">developpe par Delens Raphael</footer>
     </div>
   );
 }

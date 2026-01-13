@@ -12,6 +12,9 @@
   gap: 20px;
   width: 100%;
   flex: 1;
+  align-content: start;
+  justify-content: stretch;
+  grid-auto-rows: max-content;
 }
 
 .admin-header {
@@ -24,6 +27,7 @@
     linear-gradient(135deg, rgba(68, 226, 210, 0.16), rgba(68, 226, 210, 0)) ,
     var(--panel);
   box-shadow: var(--shadow);
+  min-height: 190px;
 }
 
 .brand {
@@ -36,6 +40,10 @@
   flex-wrap: wrap;
   gap: 12px;
   align-items: center;
+}
+
+.brand {
+  min-height: 72px;
 }
 
 .brand-logo {
@@ -67,8 +75,11 @@
 
 .admin-nav {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 10px;
+  align-items: center;
+  overflow-x: auto;
+  padding-bottom: 2px;
 }
 
 .nav-button {
@@ -78,6 +89,10 @@
   color: var(--text);
   padding: 10px 18px;
   font-weight: 600;
+  font-size: 0.95rem;
+  line-height: 1;
+  height: 40px;
+  min-width: 110px;
   transition: transform 120ms ease, border-color 120ms ease, background 120ms ease;
 }
 
@@ -98,13 +113,14 @@
   border: 1px solid var(--border);
   background: var(--panel);
   box-shadow: var(--shadow);
+  min-height: 110px;
 }
 
 .token-row {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: minmax(280px, 1fr) auto auto;
   gap: 14px;
-  align-items: flex-end;
+  align-items: center;
 }
 
 .token-field {
@@ -119,6 +135,10 @@
   color: var(--muted);
 }
 
+.token-field input {
+  height: 44px;
+}
+
 .primary-button {
   background: var(--accent);
   border: 1px solid rgba(68, 226, 210, 0.5);
@@ -126,6 +146,7 @@
   font-weight: 700;
   border-radius: 12px;
   padding: 10px 18px;
+  height: 44px;
 }
 
 .primary-button:hover {
@@ -138,6 +159,9 @@
   border-radius: 999px;
   background: var(--panel-2);
   color: var(--muted);
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
 }
 
 .token-status.ok {
@@ -176,7 +200,13 @@
     width: 110px;
   }
 
+  .admin-nav {
+    flex-wrap: wrap;
+    overflow-x: visible;
+  }
+
   .token-row {
+    grid-template-columns: 1fr;
     align-items: stretch;
   }
 }

@@ -141,8 +141,7 @@
   border: 1px solid rgba(68, 226, 210, 0.25);
   background: var(--panel-2);
   text-align: left;
-  display: grid;
-  gap: 10px;
+  display: block;
   transition: transform 120ms ease, border-color 120ms ease;
 }
 
@@ -157,16 +156,43 @@
   transform: none;
 }
 
+.tile-row {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.tile-thumb {
+  width: 60px;
+  height: 60px;
+  border-radius: 12px;
+  object-fit: cover;
+  background: rgba(255, 255, 255, 0.04);
+  flex: 0 0 auto;
+}
+
+.tile-info {
+  display: grid;
+  gap: 6px;
+  flex: 1;
+}
+
 .tile-title {
   font-weight: 700;
   font-size: 1.05rem;
 }
 
-.tile-meta {
-  display: flex;
-  justify-content: space-between;
+.tile-status {
   color: var(--muted);
   font-size: 0.9rem;
+}
+
+.tile-price {
+  color: var(--muted);
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin-left: auto;
 }
 
 .cart-card {

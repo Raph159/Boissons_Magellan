@@ -4,6 +4,7 @@ export type AdminProduct = {
   is_active: number;     // 1/0
   qty: number;
   price_cents: number | null;
+  image_slug?: string | null;
 };
 
 export function eurosFromCents(cents: number | null) {

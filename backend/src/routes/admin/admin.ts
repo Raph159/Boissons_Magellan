@@ -2,6 +2,7 @@ import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { randomUUID } from "crypto";
 import { getDB } from "../../db/db.js";
+import { loadProductSlugs, normalizeSlug, setProductSlug } from "../../lib/productSlug.js";
 import { requireAdmin } from "./_auth.js";
 
 export async function adminRoutes(app: FastifyInstance) {
@@ -30,7 +31,13 @@ export async function adminRoutes(app: FastifyInstance) {
       ORDER BY p.name ASC
     `).all();
 
-    return { products: rows };
+    const slugs = loadProductSlugs();
+    const products = rows.map((row: any) => ({
+      ...row,
+      image_slug: slugs[String(row.id)] ?? null,
+    }));
+
+    return { products };
   });
 
   // Create product
@@ -40,16 +47,15 @@ export async function adminRoutes(app: FastifyInstance) {
     const schema = z.object({
       name: z.string().min(1),
       is_active: z.boolean().optional().default(true),
-      // optionnel: tu peux créer direct un prix
       price_cents: z.number().int().min(0).optional(),
-      // optionnel: stock initial
       initial_qty: z.number().int().min(0).optional(),
+      image_slug: z.string().optional(),
     });
 
     const parsed = schema.safeParse(req.body);
     if (!parsed.success) return reply.code(400).send({ error: "Invalid payload" });
 
-    const { name, is_active, price_cents, initial_qty } = parsed.data;
+    const { name, is_active, price_cents, initial_qty, image_slug } = parsed.data;
     const db = getDB();
 
     const tx = db.transaction(() => {
@@ -79,14 +85,19 @@ export async function adminRoutes(app: FastifyInstance) {
         `).run(p.id, price_cents);
       }
 
-      return p.id as number;
+      const productId = p.id as number;
+      if (image_slug) {
+        const slug = normalizeSlug(image_slug);
+        if (slug) setProductSlug(productId, slug);
+      }
+
+      return productId;
     });
 
     try {
       const productId = tx();
       return reply.send({ ok: true, product_id: productId });
     } catch (e: any) {
-      // name unique => conflit
       if (String(e?.message || "").includes("UNIQUE")) {
         return reply.code(409).send({ error: "Product name already exists" });
       }
@@ -94,7 +105,7 @@ export async function adminRoutes(app: FastifyInstance) {
     }
   });
 
-  // Toggle / rename product (désactiver = retirer du kiosk)
+  // Toggle / rename product (disable = hide from kiosk)
   app.patch("/api/admin/products/:id", async (req, reply) => {
     try { requireAdmin(req); } catch (e: any) { return reply.code(e.statusCode ?? 500).send({ error: e.message }); }
 
@@ -102,6 +113,7 @@ export async function adminRoutes(app: FastifyInstance) {
     const bodySchema = z.object({
       name: z.string().min(1).optional(),
       is_active: z.boolean().optional(),
+      image_slug: z.string().optional().nullable(),
     });
 
     const p = paramsSchema.safeParse(req.params);
@@ -110,7 +122,7 @@ export async function adminRoutes(app: FastifyInstance) {
 
     const db = getDB();
     const { id } = p.data;
-    const { name, is_active } = b.data;
+    const { name, is_active, image_slug } = b.data;
 
     const existing = db.prepare(`SELECT id FROM products WHERE id=?`).get(id);
     if (!existing) return reply.code(404).send({ error: "Product not found" });
@@ -130,17 +142,22 @@ export async function adminRoutes(app: FastifyInstance) {
       db.prepare(`UPDATE products SET is_active=? WHERE id=?`).run(is_active ? 1 : 0, id);
     }
 
+    if (image_slug !== undefined) {
+      const slug = image_slug ? normalizeSlug(image_slug) : "";
+      setProductSlug(id, slug || null);
+    }
+
     return reply.send({ ok: true });
   });
 
-  // Set price (historisé)
+  // Set price (historized)
   app.post("/api/admin/products/:id/price", async (req, reply) => {
     try { requireAdmin(req); } catch (e: any) { return reply.code(e.statusCode ?? 500).send({ error: e.message }); }
 
     const paramsSchema = z.object({ id: z.coerce.number().int().positive() });
     const bodySchema = z.object({
       price_cents: z.number().int().min(0),
-      starts_at: z.string().optional(), // optionnel (ISO), sinon now
+      starts_at: z.string().optional(),
     });
 
     const p = paramsSchema.safeParse(req.params);
