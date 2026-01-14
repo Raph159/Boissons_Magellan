@@ -1,4 +1,4 @@
-FROM node:20-alpine
+FROM node:20-bookworm-slim
 
 WORKDIR /app
 
@@ -9,5 +9,4 @@ COPY . .
 RUN npm run build
 
 EXPOSE 3000
-
 CMD ["node", "src/index.js"]
