@@ -1,0 +1,27 @@
+services:
+  backend:
+    build: ./backend
+    container_name: boissons-backend
+    ports:
+      - "127.0.0.1:3000:3000"
+    volumes:
+      - /var/lib/boissons:/data
+    environment:
+      DB_PATH: /data/app.db
+      PORT: "3000"
+      NODE_ENV: production
+    restart: unless-stopped
+
+  kiosk:
+    build: ./kiosk
+    container_name: boissons-kiosk
+    ports:
+      - "127.0.0.1:8080:80"
+    restart: unless-stopped
+
+  admin:
+    build: ./admin
+    container_name: boissons-admin
+    ports:
+      - "127.0.0.1:8081:80"
+    restart: unless-stopped
