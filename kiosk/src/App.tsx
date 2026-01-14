@@ -20,6 +20,7 @@ export default function App() {
   const [screen, setScreen] = useState<"badge" | "products" | "thanks" | "debt">("badge");
   const [status, setStatus] = useState("Pas de badge ? Contactez le comité.");
   const [user, setUser] = useState<User | null>(null);
+  const [blockedModal, setBlockedModal] = useState<{ title: string; message: string } | null>(null);
 
   const [products, setProducts] = useState<Product[]>([]);
   const [cart, setCart] = useState<Cart>({});
@@ -41,6 +42,20 @@ export default function App() {
     };
   }, []);
 
+  function showBlockedModal(name?: string) {
+    const baseMessage =
+      "Votre compte est bloqué. Vous ne pouvez pas commander de boisson. Contactez le comité.";
+    setBlockedModal({
+      title: "Accès bloqué",
+      message: name ? `${name}, ${baseMessage}` : baseMessage,
+    });
+    setUser(null);
+    setProducts([]);
+    setCart({});
+    setScreen("badge");
+    setStatus("Badge pour commencer");
+  }
+
   async function identify(uidRaw: string) {
     const uid = uidRaw.trim().toUpperCase();
     setStatus(`Identification de ${uid}...`);
@@ -53,6 +68,10 @@ export default function App() {
 
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
+      if (res.status === 403) {
+        showBlockedModal(err.user?.name);
+        return;
+      }
       setStatus(err.error || `Erreur (${res.status})`);
       return;
     }
@@ -77,6 +96,10 @@ export default function App() {
     const res = await fetch(`/api/kiosk/debt/${userId}`);
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
+      if (res.status === 403) {
+        showBlockedModal(err.user?.name);
+        return;
+      }
       setDebtError(err.error || `Erreur (${res.status})`);
       setDebt(null);
       return;
@@ -154,6 +177,10 @@ export default function App() {
 
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
+      if (res.status === 403) {
+        showBlockedModal(err.user?.name);
+        return;
+      }
       setStatus(err.error || `Erreur (${res.status})`);
       return;
     }
@@ -186,7 +213,7 @@ export default function App() {
             <img className="badge-logo" src={`${import.meta.env.BASE_URL}magellan-logo.png`} alt="Magellan" />
 
 
-            <h1>Badgez pour commencer123</h1>
+            <h1>Badgez pour commencer</h1>
             <p className="badge-status">{status}</p>
           </section>
         )}
@@ -362,6 +389,22 @@ export default function App() {
           </section>
         )}
       </main>
+      {blockedModal && (
+        <div className="blocked-modal-backdrop" role="dialog" aria-modal="true">
+          <div className="blocked-modal">
+            <h2>{blockedModal.title}</h2>
+            <p>{blockedModal.message}</p>
+            <div className="blocked-modal-actions">
+              <button
+                className="blocked-modal-button"
+                onClick={() => setBlockedModal(null)}
+              >
+                OK
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       <footer className="app-footer">Développé par Delens Raphaël</footer>
     </div>
   );
